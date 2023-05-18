@@ -54,12 +54,12 @@ func ParseJSON(r io.Reader) (Conditions, error) {
 	}
 
 	summary := response.Weather[0].Main
-	celsius := convertKevinToCelsius(response.Main.Temp)
+	celsius := convertKelvinToCelsius(response.Main.Temp)
 
 	return Conditions{summary, celsius}, nil
 }
 
-func convertKevinToCelsius(kelvin float64) (celsius float64) {
+func convertKelvinToCelsius(kelvin float64) (celsius float64) {
 	celsius = kelvin - 273.15
 	return math.Round(celsius*100) / 100
 }
