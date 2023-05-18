@@ -12,7 +12,7 @@ func TestFormatURL(t *testing.T) {
 	t.Parallel()
 	location := "London"
 	token := "dummy_token"
-	want := "??? You need to fill this part in! ???"
+	want := "https://api.openweathermap.org/data/2.5/weather?q=London&appid=dummy_token"
 	got := weather.FormatURL(location, token)
 	if want != got {
 		t.Errorf("want %q, got %q", want, got)
@@ -30,7 +30,10 @@ func TestParseJSON(t *testing.T) {
 		Summary:            "Drizzle",
 		TemperatureCelsius: 7.17,
 	}
-	got := weather.ParseJSON(f)
+	got, err := weather.ParseJSON(f)
+	if err != nil {
+		t.Fatal("didn't expect an error parsing json")
+	}
 	if !cmp.Equal(want, got) {
 		t.Error(cmp.Diff(want, got))
 	}
