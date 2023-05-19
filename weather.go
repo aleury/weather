@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"math"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -28,6 +30,25 @@ type jsonResponse struct {
 	Main struct {
 		Temp float64 `json:"temp"`
 	} `json:"main"`
+}
+
+func RunCLI() {
+	location, err := LocationFromArgs(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	token := os.Getenv("OPENWEATHER_API_TOKEN")
+	if token == "" {
+		log.Fatal("missing open weather api token")
+	}
+
+	conditions, err := Current(location, token)
+	if err != nil {
+		log.Fatalf("error fetching current weather conditions: %s\n", err)
+	}
+
+	fmt.Println(conditions.String())
 }
 
 func Current(location, token string) (Conditions, error) {
