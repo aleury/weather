@@ -72,3 +72,15 @@ func TestLocationFromArgsWithInvalidInput(t *testing.T) {
 		t.Error("expected an error to be returned")
 	}
 }
+
+func TestConditions(t *testing.T) {
+	conditions := weather.Conditions{
+		Summary:            "Drizzle",
+		TemperatureCelsius: 7.17,
+	}
+	want := "Drizzle 7.2ºC"
+	got := conditions.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}

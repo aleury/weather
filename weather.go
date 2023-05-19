@@ -17,6 +17,10 @@ type Conditions struct {
 	TemperatureCelsius float64
 }
 
+func (c *Conditions) String() string {
+	return fmt.Sprintf("%s %.1fºC", c.Summary, c.TemperatureCelsius)
+}
+
 type jsonResponse struct {
 	Weather []struct {
 		Main string `json:"main"`
