@@ -2,10 +2,12 @@ package weather
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
 	"net/http"
+	"strings"
 )
 
 const apiUrl = "https://api.openweathermap.org/data/2.5/weather"
@@ -57,6 +59,29 @@ func ParseJSON(r io.Reader) (Conditions, error) {
 	celsius := convertKelvinToCelsius(response.Main.Temp)
 
 	return Conditions{summary, celsius}, nil
+}
+
+func LocationFromArgs(args []string) (string, error) {
+	if len(args) < 2 {
+		return "", errors.New("location not provided")
+	}
+	locationArgs := args[1:]
+
+	cityParts := []string{}
+	countryCodeParts := []string{}
+	for i := 0; i < len(locationArgs); i++ {
+		cityParts = append(cityParts, locationArgs[i])
+		if strings.Contains(locationArgs[i], ",") {
+			countryCodeParts = append(countryCodeParts, locationArgs[i+1:]...)
+			break
+		}
+	}
+
+	city := strings.Join(cityParts, " ")
+	countryCode := strings.Join(countryCodeParts, "")
+	location := city + countryCode
+
+	return location, nil
 }
 
 func convertKelvinToCelsius(kelvin float64) (celsius float64) {
