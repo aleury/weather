@@ -12,11 +12,11 @@ import (
 
 func TestFormatURL(t *testing.T) {
 	t.Parallel()
-	baseUrl := "https://api.openweathermap.org/data/2.5/weather"
 	location := "London"
 	token := "dummy_token"
+	client := weather.NewClient(token)
 	want := "https://api.openweathermap.org/data/2.5/weather?q=London&appid=dummy_token"
-	got := weather.FormatURL(baseUrl, location, token)
+	got := client.FormatURL(location)
 	if want != got {
 		t.Errorf("want %q, got %q", want, got)
 	}
@@ -90,7 +90,7 @@ func TestConditions(t *testing.T) {
 
 func TestCurrent(t *testing.T) {
 	t.Parallel()
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		data, err := os.ReadFile("testdata/london.json")
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
@@ -103,12 +103,15 @@ func TestCurrent(t *testing.T) {
 	}))
 	defer server.Close()
 
+	client := weather.NewClient("dummy_token")
+	client.BaseURL = server.URL
+	client.HttpClient = server.Client()
+
 	want := weather.Conditions{
 		Summary:            "Drizzle",
 		TemperatureCelsius: 7.17,
 	}
-	client := weather.NewClientWithUrl(server.URL, "dummy_token")
-	got, err := client.Current("London")
+	got, err := client.Current("London,UK")
 	if err != nil {
 		t.Fatalf("didn't expect an error")
 	}
