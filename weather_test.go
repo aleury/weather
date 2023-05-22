@@ -119,3 +119,22 @@ func TestCurrent(t *testing.T) {
 		t.Error(cmp.Diff(want, got))
 	}
 }
+
+func TestCurrentWithUnknownLocation(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(`{"error": "unknown location"}`))
+	}))
+	defer server.Close()
+
+	client := weather.NewClient("dummy_token")
+	client.BaseURL = server.URL
+	client.HttpClient = server.Client()
+
+	_, err := client.Current("unknown")
+	if err == nil {
+		t.Fatal("expected to get an error")
+	}
+}

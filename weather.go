@@ -74,6 +74,9 @@ func (c *Client) Current(location string) (Conditions, error) {
 		return Conditions{}, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return Conditions{}, fmt.Errorf("request failed: %s", resp.Status)
+	}
 
 	conditions, err := ParseJSON(resp.Body)
 	if err != nil {
