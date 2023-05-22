@@ -33,11 +33,16 @@ type jsonResponse struct {
 }
 
 type Client struct {
-	token string
+	baseUrl string
+	token   string
 }
 
 func NewClient(token string) Client {
-	return Client{token}
+	return NewClientWithUrl(apiUrl, token)
+}
+
+func NewClientWithUrl(baseUrl, token string) Client {
+	return Client{baseUrl, token}
 }
 
 func RunCLI() {
@@ -61,7 +66,7 @@ func RunCLI() {
 }
 
 func (c *Client) Current(location string) (Conditions, error) {
-	url := FormatURL(location, c.token)
+	url := FormatURL(c.baseUrl, location, c.token)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -77,8 +82,8 @@ func (c *Client) Current(location string) (Conditions, error) {
 	return conditions, nil
 }
 
-func FormatURL(location, token string) string {
-	return fmt.Sprintf("%s?q=%s&appid=%s", apiUrl, location, token)
+func FormatURL(baseUrl, location, token string) string {
+	return fmt.Sprintf("%s?q=%s&appid=%s", baseUrl, location, token)
 }
 
 func ParseJSON(r io.Reader) (Conditions, error) {
