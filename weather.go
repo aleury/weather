@@ -32,6 +32,14 @@ type jsonResponse struct {
 	} `json:"main"`
 }
 
+type Client struct {
+	token string
+}
+
+func NewClient(token string) Client {
+	return Client{token}
+}
+
 func RunCLI() {
 	location, err := LocationFromArgs(os.Args)
 	if err != nil {
@@ -42,8 +50,9 @@ func RunCLI() {
 	if token == "" {
 		log.Fatal("missing open weather api token")
 	}
+	client := NewClient(token)
 
-	conditions, err := Current(location, token)
+	conditions, err := client.Current(location)
 	if err != nil {
 		log.Fatalf("error fetching current weather conditions: %s\n", err)
 	}
@@ -51,8 +60,8 @@ func RunCLI() {
 	fmt.Println(conditions.String())
 }
 
-func Current(location, token string) (Conditions, error) {
-	url := FormatURL(location, token)
+func (c *Client) Current(location string) (Conditions, error) {
+	url := FormatURL(location, c.token)
 
 	resp, err := http.Get(url)
 	if err != nil {
