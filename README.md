@@ -17,7 +17,7 @@ $ weather London, UK
 Cloudy 15.2ºC
 ```
 
-## Getting started
+# Getting started
 
 This tool uses the [OpenWeather](https://openweathermap.org/api) API, so you'll need to sign in to the OpenWeather site to create an API token and add it your shell environment:
 
