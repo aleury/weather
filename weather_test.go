@@ -18,7 +18,7 @@ func TestMain(m *testing.M) {
 	}))
 }
 
-func TestFormatURL(t *testing.T) {
+func TestFormatURLReturnsURLWithLocationAndToken(t *testing.T) {
 	t.Parallel()
 	location := "London"
 	token := "dummy_token"
@@ -30,7 +30,7 @@ func TestFormatURL(t *testing.T) {
 	}
 }
 
-func TestParseJSON(t *testing.T) {
+func TestParseJSONReturnsWeatherConditonsForValidInput(t *testing.T) {
 	t.Parallel()
 	f, err := os.Open("testdata/london.json")
 	if err != nil {
@@ -50,7 +50,7 @@ func TestParseJSON(t *testing.T) {
 	}
 }
 
-func TestLocationFromArgs(t *testing.T) {
+func TestLocationFromArgsParsesLocationFromValidInput(t *testing.T) {
 	t.Parallel()
 	type testCase struct {
 		args []string
@@ -75,7 +75,7 @@ func TestLocationFromArgs(t *testing.T) {
 	}
 }
 
-func TestLocationFromArgsWithInvalidInput(t *testing.T) {
+func TestLocationFromArgsFailsWithInvalidInput(t *testing.T) {
 	t.Parallel()
 	args := []string{"/usr/bin/weather"}
 	_, err := weather.LocationFromArgs(args)
@@ -84,7 +84,7 @@ func TestLocationFromArgsWithInvalidInput(t *testing.T) {
 	}
 }
 
-func TestConditions(t *testing.T) {
+func TestConditionsCanBeFormattedAsAString(t *testing.T) {
 	conditions := weather.Conditions{
 		Summary:            "Drizzle",
 		TemperatureCelsius: 7.17,
@@ -96,7 +96,7 @@ func TestConditions(t *testing.T) {
 	}
 }
 
-func TestCurrent(t *testing.T) {
+func TestCurrentReturnsPresentWeatherConditonsOfAValidLocation(t *testing.T) {
 	t.Parallel()
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		data, err := os.ReadFile("testdata/london.json")
@@ -128,7 +128,7 @@ func TestCurrent(t *testing.T) {
 	}
 }
 
-func TestCurrentWithUnknownLocation(t *testing.T) {
+func TestCurrentCannotReturnWeatherConditonsOfAnUnknownLocation(t *testing.T) {
 	t.Parallel()
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

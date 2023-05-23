@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestScripts(t *testing.T) {
+func TestRunCLIScripts(t *testing.T) {
 	testscript.Run(t, testscript.Params{
 		Dir: "testdata/scripts",
 		Setup: func(env *testscript.Env) error {
@@ -20,7 +20,7 @@ func TestScripts(t *testing.T) {
 	})
 }
 
-func TestConditionsIntegration(t *testing.T) {
+func TestOpenWeatherMapAPIReturnsCurrentWeatherConditions(t *testing.T) {
 	t.Parallel()
 	token := os.Getenv("OPENWEATHER_API_TOKEN")
 	if token == "" {
