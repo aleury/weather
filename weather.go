@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"net/http"
 	"os"
@@ -13,26 +12,6 @@ import (
 )
 
 const apiUrl = "https://api.openweathermap.org/data/2.5/weather"
-
-// Conditions holds the weather summary and temperature of a particular location.
-type Conditions struct {
-	Summary            string
-	TemperatureCelsius float64
-}
-
-// String formats the weather conditions as a string.
-func (c *Conditions) String() string {
-	return fmt.Sprintf("%s %.1fºC", c.Summary, c.TemperatureCelsius)
-}
-
-type jsonResponse struct {
-	Weather []struct {
-		Main string `json:"main"`
-	} `json:"weather"`
-	Main struct {
-		Temp float64 `json:"temp"`
-	} `json:"main"`
-}
 
 // Client is an API client for fetching the current weather conditions
 // from the Open Weather Map service.
@@ -51,25 +30,9 @@ func NewClient(token string) *Client {
 	}
 }
 
-// RunCLI runs the command-line interface for weather.
-func RunCLI() {
-	location, err := LocationFromArgs(os.Args)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	token := os.Getenv("OPENWEATHER_API_TOKEN")
-	if token == "" {
-		log.Fatal("missing open weather api token")
-	}
-	client := NewClient(token)
-
-	conditions, err := client.Current(location)
-	if err != nil {
-		log.Fatalf("error fetching current weather conditions: %s\n", err)
-	}
-
-	fmt.Println(conditions.String())
+// FormatURL returns a URL for fetching the current weather of the given location.
+func (c *Client) FormatURL(location string) string {
+	return fmt.Sprintf("%s?q=%s&appid=%s", c.BaseURL, location, c.token)
 }
 
 // Current fetches the present weather conditions of the given location.
@@ -93,9 +56,24 @@ func (c *Client) Current(location string) (Conditions, error) {
 	return conditions, nil
 }
 
-// FormatURL returns a URL for fetching the current weather of the given location.
-func (c *Client) FormatURL(location string) string {
-	return fmt.Sprintf("%s?q=%s&appid=%s", c.BaseURL, location, c.token)
+// Conditions holds the weather summary and temperature of a particular location.
+type Conditions struct {
+	Summary            string
+	TemperatureCelsius float64
+}
+
+// String formats the weather conditions as a string.
+func (c *Conditions) String() string {
+	return fmt.Sprintf("%s %.1fºC", c.Summary, c.TemperatureCelsius)
+}
+
+type jsonResponse struct {
+	Weather []struct {
+		Main string `json:"main"`
+	} `json:"weather"`
+	Main struct {
+		Temp float64 `json:"temp"`
+	} `json:"main"`
 }
 
 // ParseJSON decodes the JSON response provided by the given io.Reader into
@@ -142,4 +120,29 @@ func LocationFromArgs(args []string) (string, error) {
 func convertKelvinToCelsius(kelvin float64) (celsius float64) {
 	celsius = kelvin - 273.15
 	return math.Round(celsius*100) / 100
+}
+
+// RunCLI runs the command-line interface for weather.
+func RunCLI() int {
+	location, err := LocationFromArgs(os.Args)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+
+	token := os.Getenv("OPENWEATHER_API_TOKEN")
+	if token == "" {
+		fmt.Fprintln(os.Stderr, "missing open weather api token")
+		return 1
+	}
+	client := NewClient(token)
+
+	conditions, err := client.Current(location)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "couldn't fetch weather conditions for location %q: %s\n", location, err)
+		return 1
+	}
+
+	fmt.Println(conditions.String())
+	return 0
 }

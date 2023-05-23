@@ -1,0 +1,2 @@
+exec weather 'London'
+stdout .

@@ -1,0 +1,3 @@
+! exec weather 'unknown'
+stderr 'couldn''t fetch weather conditions for location "unknown"'
+! stdout .

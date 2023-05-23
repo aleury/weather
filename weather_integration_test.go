@@ -4,10 +4,21 @@
 package weather_test
 
 import (
+	"github.com/rogpeppe/go-internal/testscript"
 	"os"
 	"testing"
 	"weather"
 )
+
+func TestScripts(t *testing.T) {
+	testscript.Run(t, testscript.Params{
+		Dir: "testdata/scripts",
+		Setup: func(env *testscript.Env) error {
+			env.Setenv("OPENWEATHER_API_TOKEN", os.Getenv("OPENWEATHER_API_TOKEN"))
+			return nil
+		},
+	})
+}
 
 func TestConditionsIntegration(t *testing.T) {
 	t.Parallel()

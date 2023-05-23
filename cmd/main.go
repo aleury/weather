@@ -1,7 +1,10 @@
 package main
 
-import "weather"
+import (
+	"os"
+	"weather"
+)
 
 func main() {
-	weather.RunCLI()
+	os.Exit(weather.RunCLI())
 }

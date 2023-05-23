@@ -8,7 +8,14 @@ import (
 	"weather"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/rogpeppe/go-internal/testscript"
 )
+
+func TestMain(m *testing.M) {
+	os.Exit(testscript.RunMain(m, map[string]func() int{
+		"weather": weather.RunCLI,
+	}))
+}
 
 func TestFormatURL(t *testing.T) {
 	t.Parallel()
