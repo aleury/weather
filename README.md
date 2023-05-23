@@ -1,6 +1,8 @@
 [![Test](https://github.com/aleury/weather/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/aleury/weather/actions/workflows/test.yml)
 
-`weather` is a command-line tool that makes it easy to fetch the current weather conditions from all around the world. Install it with:
+`weather` is a command-line tool that makes it easy to fetch the current weather conditions from all around the world. 
+
+Install it with:
 
 ```
 go install github.com/aleury/weather/cmd/weather@latest
@@ -8,7 +10,7 @@ go install github.com/aleury/weather/cmd/weather@latest
 
 # What?
 
-For example, run the following if you'd like to get the current weather conditions of London, UK
+For example, run the following if you'd like to get the current weather conditions of London, UK:
 
 ```
 $ weather London, UK
