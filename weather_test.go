@@ -2,11 +2,11 @@ package weather_test
 
 import (
 	"fmt"
+	"github.com/aleury/weather"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
-	"weather"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/rogpeppe/go-internal/testscript"

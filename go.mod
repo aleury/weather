@@ -1,4 +1,4 @@
-module weather
+module github.com/aleury/weather
 
 go 1.20
 

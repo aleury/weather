@@ -4,10 +4,10 @@
 package weather_test
 
 import (
+	"github.com/aleury/weather"
 	"github.com/rogpeppe/go-internal/testscript"
 	"os"
 	"testing"
-	"weather"
 )
 
 func TestScripts(t *testing.T) {
