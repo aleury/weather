@@ -1,3 +1,4 @@
+[![Test](https://github.com/aleury/weather/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/aleury/weather/actions/workflows/test.yml)
 # Weather
 
 This is a Go project template, intended for students at the [Bitfield Institute of Technology](https://bitfieldconsulting.com/golang/bit)—but everyone's welcome to try it if you're interested in learning or practicing Go.
