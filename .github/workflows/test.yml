@@ -19,4 +19,5 @@ jobs:
       with:
         version: "2022.1.1"
         install-go: false
+        cache-key: ${{ matrix.go-version }}
     - run: go test -cover -tags=integration ./...
