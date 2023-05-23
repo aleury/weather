@@ -1,6 +1,8 @@
 # Based on https://github.com/mvdan/github-actions-golang
 on: [push, pull_request]
 name: Test
+env:
+  OPENWEATHER_API_TOKEN: {{ secrets.OPENWEATHER_API_TOKEN }}
 jobs:
   test:
     strategy:
@@ -13,4 +15,4 @@ jobs:
     - uses: actions/setup-go@v4
       with:
         go-version: ${{ matrix.go-version }}
-    - run: go test -cover ./...
+    - run: go test -cover -tags=integration ./...
