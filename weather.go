@@ -14,11 +14,13 @@ import (
 
 const apiUrl = "https://api.openweathermap.org/data/2.5/weather"
 
+// Conditions holds the weather summary and temperature of a particular location.
 type Conditions struct {
 	Summary            string
 	TemperatureCelsius float64
 }
 
+// String formats the weather conditions as a string.
 func (c *Conditions) String() string {
 	return fmt.Sprintf("%s %.1fºC", c.Summary, c.TemperatureCelsius)
 }
@@ -32,12 +34,15 @@ type jsonResponse struct {
 	} `json:"main"`
 }
 
+// Client is an API client for fetching the current weather conditions
+// from the Open Weather Map service.
 type Client struct {
 	token      string
 	BaseURL    string
 	HttpClient *http.Client
 }
 
+// NewClient returns a new instance of the Client configured with the given auth token.
 func NewClient(token string) *Client {
 	return &Client{
 		token:      token,
@@ -46,6 +51,7 @@ func NewClient(token string) *Client {
 	}
 }
 
+// RunCLI runs the command-line interface for weather.
 func RunCLI() {
 	location, err := LocationFromArgs(os.Args)
 	if err != nil {
@@ -66,6 +72,7 @@ func RunCLI() {
 	fmt.Println(conditions.String())
 }
 
+// Current fetches the present weather conditions of the given location.
 func (c *Client) Current(location string) (Conditions, error) {
 	url := c.FormatURL(location)
 
@@ -86,10 +93,13 @@ func (c *Client) Current(location string) (Conditions, error) {
 	return conditions, nil
 }
 
+// FormatURL returns a URL for fetching the current weather of the given location.
 func (c *Client) FormatURL(location string) string {
 	return fmt.Sprintf("%s?q=%s&appid=%s", c.BaseURL, location, c.token)
 }
 
+// ParseJSON decodes the JSON response provided by the given io.Reader into
+// the struct for weather conditions.
 func ParseJSON(r io.Reader) (Conditions, error) {
 	decoder := json.NewDecoder(r)
 
@@ -104,6 +114,8 @@ func ParseJSON(r io.Reader) (Conditions, error) {
 	return Conditions{summary, celsius}, nil
 }
 
+// LocationFromArgs parses the location from the arguments given to
+// the command-line interface.
 func LocationFromArgs(args []string) (string, error) {
 	if len(args) < 2 {
 		return "", errors.New("location not provided")
