@@ -17,7 +17,7 @@ import (
 const apiUrl = "https://api.openweathermap.org/data/2.5/weather"
 
 // Client is an API client for fetching the current weather conditions
-// from the Open Weather Map service.
+// from the Open Weather service.
 type Client struct {
 	token      string
 	BaseURL    string
