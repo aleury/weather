@@ -2,7 +2,7 @@
 on: [push, pull_request]
 name: Test
 env:
-  OPENWEATHER_API_TOKEN: {{ secrets.OPENWEATHER_API_TOKEN }}
+  OPENWEATHER_API_TOKEN: ${{ secrets.OPENWEATHER_API_TOKEN }}
 jobs:
   test:
     strategy:
