@@ -1,3 +1,5 @@
+// Package weather makes it easy to fetch the current weather conditions
+// of cities from all around the world.
 package weather
 
 import (

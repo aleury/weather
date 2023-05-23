@@ -1,6 +1,7 @@
 package weather_test
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -144,4 +145,66 @@ func TestCurrentWithUnknownLocation(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected to get an error")
 	}
+}
+
+func ExampleClient_Current() {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		data, err := os.ReadFile("testdata/london.json")
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(data)
+	}))
+	defer server.Close()
+
+	client := weather.NewClient("dummy_token")
+	client.BaseURL = server.URL
+
+	conditions, err := client.Current("London,UK")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(conditions.String())
+	// Output:
+	// Drizzle 7.2ºC
+}
+
+func ExampleClient_FormatURL() {
+	client := weather.NewClient("dummy_token")
+	url := client.FormatURL("London,UK")
+	fmt.Println(url)
+	// Output:
+	// https://api.openweathermap.org/data/2.5/weather?q=London,UK&appid=dummy_token
+}
+
+func ExampleParseJSON() {
+	f, err := os.Open("testdata/london.json")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	conditions, err := weather.ParseJSON(f)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(conditions.String())
+	// Output:
+	// Drizzle 7.2ºC
+}
+
+func ExampleConditions_String() {
+	conditions := weather.Conditions{
+		Summary:            "Drizzle",
+		TemperatureCelsius: 7.17,
+	}
+	fmt.Println(conditions.String())
+	// Output:
+	// Drizzle 7.2ºC
 }
