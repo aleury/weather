@@ -17,11 +17,10 @@ $ weather London, UK
 Cloudy 15.2ºC
 ```
 
-# Getting started
+# How?
 
 This tool uses the [OpenWeather](https://openweathermap.org/api) API, so you'll need to sign in to the OpenWeather site to create an API token and add it your shell environment:
 
 ```
 export OPENWEATHER_API_KEY=my_api_token
 ```
-
