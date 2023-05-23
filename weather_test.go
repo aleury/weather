@@ -20,13 +20,23 @@ func TestMain(m *testing.M) {
 
 func TestFormatURLReturnsURLWithLocationAndToken(t *testing.T) {
 	t.Parallel()
-	location := "London"
-	token := "dummy_token"
-	client := weather.NewClient(token)
-	want := "https://api.openweathermap.org/data/2.5/weather?q=London&appid=dummy_token"
-	got := client.FormatURL(location)
-	if want != got {
-		t.Errorf("want %q, got %q", want, got)
+	type testCase struct {
+		location string
+		token    string
+		want     string
+	}
+	tests := []testCase{
+		{location: "London", token: "dummy_token", want: "https://api.openweathermap.org/data/2.5/weather?q=London&appid=dummy_token"},
+		{location: "London,UK", token: "dummy_token", want: "https://api.openweathermap.org/data/2.5/weather?q=London%2CUK&appid=dummy_token"},
+		{location: "New York City", token: "dummy_token", want: "https://api.openweathermap.org/data/2.5/weather?q=New+York+City&appid=dummy_token"},
+		{location: "New York City,US", token: "dummy_token", want: "https://api.openweathermap.org/data/2.5/weather?q=New+York+City%2CUS&appid=dummy_token"},
+	}
+	for _, tc := range tests {
+		client := weather.NewClient(tc.token)
+		got := client.FormatURL(tc.location)
+		if tc.want != got {
+			t.Errorf("want %q, got %q", tc.want, got)
+		}
 	}
 }
 
@@ -179,7 +189,7 @@ func ExampleClient_FormatURL() {
 	url := client.FormatURL("London,UK")
 	fmt.Println(url)
 	// Output:
-	// https://api.openweathermap.org/data/2.5/weather?q=London,UK&appid=dummy_token
+	// https://api.openweathermap.org/data/2.5/weather?q=London%2CUK&appid=dummy_token
 }
 
 func ExampleParseJSON() {

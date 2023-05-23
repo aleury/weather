@@ -9,6 +9,7 @@ import (
 	"io"
 	"math"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -34,7 +35,7 @@ func NewClient(token string) *Client {
 
 // FormatURL returns a URL for fetching the current weather of the given location.
 func (c *Client) FormatURL(location string) string {
-	return fmt.Sprintf("%s?q=%s&appid=%s", c.BaseURL, location, c.token)
+	return fmt.Sprintf("%s?q=%s&appid=%s", c.BaseURL, url.QueryEscape(location), c.token)
 }
 
 // Current fetches the present weather conditions of the given location.
