@@ -1,8 +1,8 @@
 package main
 
 import (
+	"github.com/aleury/weather"
 	"os"
-	"weather"
 )
 
 func main() {
