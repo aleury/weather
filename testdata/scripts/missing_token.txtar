@@ -1,4 +1,0 @@
-env OPENWEATHER_API_TOKEN=
-! exec weather 'London, UK'
-stderr 'missing open weather api token\n'
-! stdout .

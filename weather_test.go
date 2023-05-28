@@ -1,24 +1,47 @@
 package weather_test
 
 import (
+	"errors"
 	"fmt"
-	"github.com/aleury/weather"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 
+	"github.com/aleury/weather"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/rogpeppe/go-internal/testscript"
 )
 
-func TestMain(m *testing.M) {
-	os.Exit(testscript.RunMain(m, map[string]func() int{
-		"weather": weather.RunCLI,
-	}))
+type testClient struct{}
+
+func (c *testClient) Current(location string) (weather.Conditions, error) {
+	if location != "London" {
+		return weather.Conditions{}, errors.New("unknown location")
+	}
+	conditions := weather.Conditions{
+		Summary:            "Drizzle",
+		TemperatureCelsius: 7.17,
+	}
+	return conditions, nil
 }
 
-func TestFormatURLReturnsURLWithLocationAndToken(t *testing.T) {
+func TestMain(m *testing.M) {
+	os.Exit(testscript.RunMain(m, map[string]func() int{
+		"weather": func() int {
+			client := testClient{}
+			return weather.RunCLI(&client)
+		},
+	}))
+}
+func TestRunCLIScripts(t *testing.T) {
+	testscript.Run(t, testscript.Params{
+		Dir: "testdata/scripts",
+	})
+}
+
+func TestFormatURL_ReturnsURLWithLocationAndToken(t *testing.T) {
 	t.Parallel()
 	type testCase struct {
 		location string
@@ -32,7 +55,10 @@ func TestFormatURLReturnsURLWithLocationAndToken(t *testing.T) {
 		{location: "New York City,US", token: "dummy_token", want: "https://api.openweathermap.org/data/2.5/weather?q=New+York+City%2CUS&appid=dummy_token"},
 	}
 	for _, tc := range tests {
-		client := weather.NewClient(tc.token)
+		client, err := weather.NewOpenWeatherClient(tc.token)
+		if err != nil {
+			t.Fatalf("got an unexpected error %s", err)
+		}
 		got := client.FormatURL(tc.location)
 		if tc.want != got {
 			t.Errorf("want %q, got %q", tc.want, got)
@@ -40,7 +66,7 @@ func TestFormatURLReturnsURLWithLocationAndToken(t *testing.T) {
 	}
 }
 
-func TestParseJSONReturnsWeatherConditonsForValidInput(t *testing.T) {
+func TestParseJSON_ReturnsWeatherConditonsForValidInput(t *testing.T) {
 	t.Parallel()
 	f, err := os.Open("testdata/london.json")
 	if err != nil {
@@ -60,7 +86,7 @@ func TestParseJSONReturnsWeatherConditonsForValidInput(t *testing.T) {
 	}
 }
 
-func TestLocationFromArgsParsesLocationFromValidInput(t *testing.T) {
+func TestLocationFromArgs_ParsesLocationFromValidInput(t *testing.T) {
 	t.Parallel()
 	type testCase struct {
 		args []string
@@ -85,7 +111,7 @@ func TestLocationFromArgsParsesLocationFromValidInput(t *testing.T) {
 	}
 }
 
-func TestLocationFromArgsFailsWithInvalidInput(t *testing.T) {
+func TestLocationFromArgs_FailsWithInvalidInput(t *testing.T) {
 	t.Parallel()
 	args := []string{"/usr/bin/weather"}
 	_, err := weather.LocationFromArgs(args)
@@ -94,7 +120,7 @@ func TestLocationFromArgsFailsWithInvalidInput(t *testing.T) {
 	}
 }
 
-func TestConditionsCanBeFormattedAsAString(t *testing.T) {
+func TestConditions_CanBeFormattedAsAString(t *testing.T) {
 	conditions := weather.Conditions{
 		Summary:            "Drizzle",
 		TemperatureCelsius: 7.17,
@@ -106,13 +132,23 @@ func TestConditionsCanBeFormattedAsAString(t *testing.T) {
 	}
 }
 
-func TestCurrentReturnsPresentWeatherConditonsOfAValidLocation(t *testing.T) {
+func TestNewOpenWeatherClient_ReturnsErrorForInvalidToken(t *testing.T) {
+	want := "missing api token"
+	_, err := weather.NewOpenWeatherClient("")
+	if err == nil {
+		t.Fatal("expected an error")
+	}
+	if !cmp.Equal(err.Error(), want) {
+		t.Error(cmp.Diff(err.Error(), want))
+	}
+}
+
+func TestCurrent_ReturnsPresentWeatherConditonsOfAValidLocation(t *testing.T) {
 	t.Parallel()
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		data, err := os.ReadFile("testdata/london.json")
 		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
-			return
+			t.Fatalf("reading test data: %s", err)
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -121,7 +157,10 @@ func TestCurrentReturnsPresentWeatherConditonsOfAValidLocation(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := weather.NewClient("dummy_token")
+	client, err := weather.NewOpenWeatherClient("dummy_token")
+	if err != nil {
+		t.Fatalf("got an unexpected error %s", err)
+	}
 	client.BaseURL = server.URL
 	client.HttpClient = server.Client()
 
@@ -138,7 +177,7 @@ func TestCurrentReturnsPresentWeatherConditonsOfAValidLocation(t *testing.T) {
 	}
 }
 
-func TestCurrentCannotReturnWeatherConditonsOfAnUnknownLocation(t *testing.T) {
+func TestCurrent_ReturnsErrorWhenAPIRespondsWithUnknownLocation(t *testing.T) {
 	t.Parallel()
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -147,45 +186,24 @@ func TestCurrentCannotReturnWeatherConditonsOfAnUnknownLocation(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := weather.NewClient("dummy_token")
+	client, err := weather.NewOpenWeatherClient("dummy_token")
+	if err != nil {
+		t.Fatalf("got an unexpected error %s", err)
+	}
 	client.BaseURL = server.URL
 	client.HttpClient = server.Client()
 
-	_, err := client.Current("unknown")
+	_, err = client.Current("unknown")
 	if err == nil {
 		t.Fatal("expected to get an error")
 	}
 }
 
-func ExampleClient_Current() {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		data, err := os.ReadFile("testdata/london.json")
-		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(data)
-	}))
-	defer server.Close()
-
-	client := weather.NewClient("dummy_token")
-	client.BaseURL = server.URL
-
-	conditions, err := client.Current("London,UK")
+func ExampleOpenWeatherClient_FormatURL() {
+	client, err := weather.NewOpenWeatherClient("dummy_token")
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println(conditions.String())
-	// Output:
-	// Drizzle 7.2ºC
-}
-
-func ExampleClient_FormatURL() {
-	client := weather.NewClient("dummy_token")
 	url := client.FormatURL("London,UK")
 	fmt.Println(url)
 	// Output:

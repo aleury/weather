@@ -16,30 +16,37 @@ import (
 
 const apiUrl = "https://api.openweathermap.org/data/2.5/weather"
 
+type Client interface {
+	Current(location string) (Conditions, error)
+}
+
 // Client is an API client for fetching the current weather conditions
 // from the Open Weather service.
-type Client struct {
+type OpenWeatherClient struct {
 	token      string
 	BaseURL    string
 	HttpClient *http.Client
 }
 
-// NewClient returns a new instance of the Client configured with the given auth token.
-func NewClient(token string) *Client {
-	return &Client{
+// NewOpenWeatherClient returns a new instance of the Client configured with the given auth token.
+func NewOpenWeatherClient(token string) (*OpenWeatherClient, error) {
+	if token == "" {
+		return nil, errors.New("missing api token")
+	}
+	return &OpenWeatherClient{
 		token:      token,
 		BaseURL:    apiUrl,
 		HttpClient: &http.Client{},
-	}
+	}, nil
 }
 
 // FormatURL returns a URL for fetching the current weather of the given location.
-func (c *Client) FormatURL(location string) string {
+func (c *OpenWeatherClient) FormatURL(location string) string {
 	return fmt.Sprintf("%s?q=%s&appid=%s", c.BaseURL, url.QueryEscape(location), c.token)
 }
 
 // Current fetches the present weather conditions of the given location.
-func (c *Client) Current(location string) (Conditions, error) {
+func (c *OpenWeatherClient) Current(location string) (Conditions, error) {
 	url := c.FormatURL(location)
 
 	resp, err := c.HttpClient.Get(url)
@@ -125,20 +132,14 @@ func convertKelvinToCelsius(kelvin float64) (celsius float64) {
 	return math.Round(celsius*100) / 100
 }
 
-// RunCLI runs the command-line interface for weather.
-func RunCLI() int {
+// RunCLI runs the command-line interface using the given
+// weather api client.
+func RunCLI(client Client) int {
 	location, err := LocationFromArgs(os.Args)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-
-	token := os.Getenv("OPENWEATHER_API_TOKEN")
-	if token == "" {
-		fmt.Fprintln(os.Stderr, "missing open weather api token")
-		return 1
-	}
-	client := NewClient(token)
 
 	conditions, err := client.Current(location)
 	if err != nil {
