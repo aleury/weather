@@ -121,7 +121,7 @@ func TestLocationFromArgs_ParsesLocationFromValidInput(t *testing.T) {
 	}
 }
 
-func TestLocationFromArgs_FailsWithInvalidInput(t *testing.T) {
+func TestLocationFromArgs_ReturnsErrorForInvalidInput(t *testing.T) {
 	t.Parallel()
 	args := []string{"/usr/bin/weather"}
 	_, err := weather.LocationFromArgs(args)
