@@ -20,7 +20,7 @@ type Client interface {
 	Current(location string) (Conditions, error)
 }
 
-// Client is an API client for fetching the current weather conditions
+// OpenWeatherClient is an API client for fetching the current weather conditions
 // from the Open Weather service.
 type OpenWeatherClient struct {
 	token      string
