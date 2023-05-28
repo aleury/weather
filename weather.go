@@ -105,18 +105,6 @@ func ParseJSON(r io.Reader) (Conditions, error) {
 	return Conditions{summary, celsius}, nil
 }
 
-// LocationFromArgs parses the location from the arguments given to
-// the command-line interface.
-func LocationFromArgs(args []string) (string, error) {
-	if len(args) < 2 {
-		return "", errors.New("location not provided")
-	}
-
-	location := strings.Join(args[1:], " ")
-
-	return location, nil
-}
-
 func convertKelvinToCelsius(kelvin float64) (celsius float64) {
 	celsius = kelvin - 273.15
 	return math.Round(celsius*100) / 100
@@ -125,11 +113,11 @@ func convertKelvinToCelsius(kelvin float64) (celsius float64) {
 // RunCLI runs the command-line interface using the given
 // weather api client.
 func RunCLI(client Client) int {
-	location, err := LocationFromArgs(os.Args)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+	if len(os.Args) < 2 {
+		fmt.Fprintln(os.Stderr, "location not provided")
 		return 1
 	}
+	location := strings.Join(os.Args[1:], " ")
 
 	conditions, err := client.Current(location)
 	if err != nil {
