@@ -104,11 +104,11 @@ func TestLocationFromArgs_ParsesLocationFromValidInput(t *testing.T) {
 	}
 	tests := []testCase{
 		{args: []string{"/usr/bin/weather", "London"}, want: "London"},
-		{args: []string{"/usr/bin/weather", "London,", "UK"}, want: "London,UK"},
-		{args: []string{"/usr/bin/weather", "Berlin,", "DE"}, want: "Berlin,DE"},
+		{args: []string{"/usr/bin/weather", "London,", "UK"}, want: "London, UK"},
+		{args: []string{"/usr/bin/weather", "Berlin,", "DE"}, want: "Berlin, DE"},
 		{args: []string{"/usr/bin/weather", "New", "York"}, want: "New York"},
-		{args: []string{"/usr/bin/weather", "New", "York,", "US"}, want: "New York,US"},
-		{args: []string{"/usr/bin/weather", "Kingston", "upon", "Hull,", "UK"}, want: "Kingston upon Hull,UK"},
+		{args: []string{"/usr/bin/weather", "New", "York,", "US"}, want: "New York, US"},
+		{args: []string{"/usr/bin/weather", "Kingston", "upon", "Hull,", "UK"}, want: "Kingston upon Hull, UK"},
 	}
 	for _, tc := range tests {
 		got, err := weather.LocationFromArgs(tc.args)

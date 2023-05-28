@@ -111,21 +111,8 @@ func LocationFromArgs(args []string) (string, error) {
 	if len(args) < 2 {
 		return "", errors.New("location not provided")
 	}
-	locationArgs := args[1:]
 
-	cityParts := []string{}
-	countryCodeParts := []string{}
-	for i := 0; i < len(locationArgs); i++ {
-		cityParts = append(cityParts, locationArgs[i])
-		if strings.Contains(locationArgs[i], ",") {
-			countryCodeParts = append(countryCodeParts, locationArgs[i+1:]...)
-			break
-		}
-	}
-
-	city := strings.Join(cityParts, " ")
-	countryCode := strings.Join(countryCodeParts, "")
-	location := city + countryCode
+	location := strings.Join(args[1:], " ")
 
 	return location, nil
 }
