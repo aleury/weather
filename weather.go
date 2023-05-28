@@ -95,6 +95,9 @@ func ParseJSON(r io.Reader) (Conditions, error) {
 	if err := decoder.Decode(&response); err != nil {
 		return Conditions{}, err
 	}
+	if len(response.Weather) < 1 {
+		return Conditions{}, errors.New("invalid response: missing weather data")
+	}
 
 	summary := response.Weather[0].Main
 	celsius := convertKelvinToCelsius(response.Main.Temp)

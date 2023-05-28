@@ -1,6 +1,7 @@
 package weather_test
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"net/http"
@@ -83,6 +84,15 @@ func TestParseJSON_ReturnsWeatherConditonsForValidInput(t *testing.T) {
 	}
 	if !cmp.Equal(want, got) {
 		t.Error(cmp.Diff(want, got))
+	}
+}
+
+func TestParseJSON_ReturnsErrorForInvalidResponse(t *testing.T) {
+	t.Parallel()
+	response := bytes.NewBuffer([]byte(`{"error": "something went wrong"}`))
+	_, err := weather.ParseJSON(response)
+	if err == nil {
+		t.Error("expected to get an error")
 	}
 }
 
