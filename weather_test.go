@@ -2,40 +2,25 @@ package weather_test
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 
 	"github.com/aleury/weather"
+	"github.com/rogpeppe/go-internal/testscript"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/rogpeppe/go-internal/testscript"
 )
-
-type testClient struct{}
-
-func (c *testClient) Current(location string) (weather.Conditions, error) {
-	if location != "London" {
-		return weather.Conditions{}, errors.New("unknown location")
-	}
-	conditions := weather.Conditions{
-		Summary:            "Drizzle",
-		TemperatureCelsius: 7.17,
-	}
-	return conditions, nil
-}
 
 func TestMain(m *testing.M) {
 	os.Exit(testscript.RunMain(m, map[string]func() int{
-		"weather": func() int {
-			client := testClient{}
-			return weather.RunCLI(&client)
-		},
+		"weather": weather.RunCLI,
 	}))
 }
+
 func TestRunCLIScripts(t *testing.T) {
 	testscript.Run(t, testscript.Params{
 		Dir: "testdata/scripts",
@@ -56,10 +41,7 @@ func TestFormatURL_ReturnsURLWithLocationAndToken(t *testing.T) {
 		{location: "New York City,US", token: "dummy_token", want: "https://api.openweathermap.org/data/2.5/weather?q=New+York+City%2CUS&appid=dummy_token"},
 	}
 	for _, tc := range tests {
-		client, err := weather.NewOpenWeatherClient(tc.token)
-		if err != nil {
-			t.Fatalf("got an unexpected error %s", err)
-		}
+		client := weather.NewOpenWeatherClient(tc.token)
 		got := client.FormatURL(tc.location)
 		if tc.want != got {
 			t.Errorf("want %q, got %q", tc.want, got)
@@ -82,14 +64,26 @@ func TestParseJSON_ReturnsWeatherConditonsForValidInput(t *testing.T) {
 	if err != nil {
 		t.Fatal("didn't expect an error parsing json")
 	}
-	if !cmp.Equal(want, got) {
+	if !cmp.Equal(want.Summary, got.Summary) {
 		t.Error(cmp.Diff(want, got))
+	}
+	if !closeEnough(want.TemperatureCelsius, got.TemperatureCelsius) {
+		t.Error(cmp.Diff(want.TemperatureCelsius, got.TemperatureCelsius))
 	}
 }
 
 func TestParseJSON_ReturnsErrorForInvalidResponse(t *testing.T) {
 	t.Parallel()
 	response := bytes.NewBuffer([]byte(`{"error": "something went wrong"}`))
+	_, err := weather.ParseJSON(response)
+	if err == nil {
+		t.Error("expected to get an error")
+	}
+}
+
+func TestParseJSON_ReturnsErrorForInvalidJSON(t *testing.T) {
+	t.Parallel()
+	response := bytes.NewBuffer([]byte(`{`))
 	_, err := weather.ParseJSON(response)
 	if err == nil {
 		t.Error("expected to get an error")
@@ -108,17 +102,6 @@ func TestConditions_CanBeFormattedAsAString(t *testing.T) {
 	}
 }
 
-func TestNewOpenWeatherClient_ReturnsErrorForInvalidToken(t *testing.T) {
-	want := "missing api token"
-	_, err := weather.NewOpenWeatherClient("")
-	if err == nil {
-		t.Fatal("expected an error")
-	}
-	if !cmp.Equal(err.Error(), want) {
-		t.Error(cmp.Diff(err.Error(), want))
-	}
-}
-
 func TestCurrent_ReturnsPresentWeatherConditonsOfAValidLocation(t *testing.T) {
 	t.Parallel()
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -133,10 +116,7 @@ func TestCurrent_ReturnsPresentWeatherConditonsOfAValidLocation(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client, err := weather.NewOpenWeatherClient("dummy_token")
-	if err != nil {
-		t.Fatalf("got an unexpected error %s", err)
-	}
+	client := weather.NewOpenWeatherClient("dummy_token")
 	client.BaseURL = server.URL
 	client.HttpClient = server.Client()
 
@@ -148,8 +128,11 @@ func TestCurrent_ReturnsPresentWeatherConditonsOfAValidLocation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("didn't expect an error")
 	}
-	if !cmp.Equal(want, got) {
+	if !cmp.Equal(want.Summary, got.Summary) {
 		t.Error(cmp.Diff(want, got))
+	}
+	if !closeEnough(want.TemperatureCelsius, got.TemperatureCelsius) {
+		t.Error(cmp.Diff(want.TemperatureCelsius, got.TemperatureCelsius))
 	}
 }
 
@@ -162,24 +145,51 @@ func TestCurrent_ReturnsErrorWhenAPIRespondsWithUnknownLocation(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client, err := weather.NewOpenWeatherClient("dummy_token")
-	if err != nil {
-		t.Fatalf("got an unexpected error %s", err)
-	}
+	client := weather.NewOpenWeatherClient("dummy_token")
 	client.BaseURL = server.URL
 	client.HttpClient = server.Client()
 
-	_, err = client.Current("unknown")
+	_, err := client.Current("unknown")
 	if err == nil {
 		t.Fatal("expected to get an error")
 	}
 }
 
-func ExampleOpenWeatherClient_FormatURL() {
-	client, err := weather.NewOpenWeatherClient("dummy_token")
-	if err != nil {
-		panic(err)
+func TestCurrent_ReturnsErrorWhenAPIRespondsWithInvalidJSON(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{`))
+	}))
+	defer server.Close()
+
+	client := weather.NewOpenWeatherClient("dummy_token")
+	client.BaseURL = server.URL
+	client.HttpClient = server.Client()
+
+	_, err := client.Current("London")
+	if err == nil {
+		t.Fatal("expected to get an error")
 	}
+}
+
+func TestCurrent_ReturnsErrorForInvalidURL(t *testing.T) {
+	t.Parallel()
+	client := weather.NewOpenWeatherClient("dummy_token")
+	client.BaseURL = "bogus"
+	_, err := client.Current("unknown")
+	if err == nil {
+		t.Fatal("expected to get an error")
+	}
+}
+
+func closeEnough(a, b float64) bool {
+	return math.Abs(a-b) <= 0.001
+}
+
+func ExampleOpenWeatherClient_FormatURL() {
+	client := weather.NewOpenWeatherClient("dummy_token")
 	url := client.FormatURL("London,UK")
 	fmt.Println(url)
 	// Output:

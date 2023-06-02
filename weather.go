@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"net/http"
 	"net/url"
 	"os"
@@ -15,10 +14,6 @@ import (
 )
 
 const apiUrl = "https://api.openweathermap.org/data/2.5/weather"
-
-type Client interface {
-	Current(location string) (Conditions, error)
-}
 
 // OpenWeatherClient is an API client for fetching the current weather conditions
 // from the Open Weather service.
@@ -29,15 +24,13 @@ type OpenWeatherClient struct {
 }
 
 // NewOpenWeatherClient returns a new instance of the Client configured with the given auth token.
-func NewOpenWeatherClient(token string) (*OpenWeatherClient, error) {
-	if token == "" {
-		return nil, errors.New("missing api token")
-	}
-	return &OpenWeatherClient{
+func NewOpenWeatherClient(token string) *OpenWeatherClient {
+	client := &OpenWeatherClient{
 		token:      token,
 		BaseURL:    apiUrl,
 		HttpClient: &http.Client{},
-	}, nil
+	}
+	return client
 }
 
 // FormatURL returns a URL for fetching the current weather of the given location.
@@ -73,7 +66,7 @@ type Conditions struct {
 }
 
 // String formats the weather conditions as a string.
-func (c *Conditions) String() string {
+func (c Conditions) String() string {
 	return fmt.Sprintf("%s %.1fºC", c.Summary, c.TemperatureCelsius)
 }
 
@@ -106,25 +99,34 @@ func ParseJSON(r io.Reader) (Conditions, error) {
 }
 
 func convertKelvinToCelsius(kelvin float64) (celsius float64) {
-	celsius = kelvin - 273.15
-	return math.Round(celsius*100) / 100
+	return kelvin - 273.15
+}
+
+func CurrentWeather(token, location string) (Conditions, error) {
+	client := NewOpenWeatherClient(token)
+	return client.Current(location)
 }
 
 // RunCLI runs the command-line interface using the given
 // weather api client.
-func RunCLI(client Client) int {
+func RunCLI() int {
 	if len(os.Args) < 2 {
 		fmt.Fprintln(os.Stderr, "location not provided")
 		return 1
 	}
 	location := strings.Join(os.Args[1:], " ")
 
-	conditions, err := client.Current(location)
+	token := os.Getenv("OPENWEATHER_API_TOKEN")
+	if token == "" {
+		fmt.Fprintln(os.Stderr, "missing api token")
+		return 1
+	}
+
+	conditions, err := CurrentWeather(token, location)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "couldn't fetch weather conditions for location %q: %s\n", location, err)
 		return 1
 	}
-
-	fmt.Println(conditions.String())
+	fmt.Println(conditions)
 	return 0
 }

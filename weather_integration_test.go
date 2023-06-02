@@ -15,10 +15,7 @@ func TestOpenWeatherAPI_ReturnsCurrentWeatherConditions(t *testing.T) {
 	if token == "" {
 		t.Skip("Please set a valid API key in the environment variable OPENWEATHER_API_TOKEN")
 	}
-	client, err := weather.NewOpenWeatherClient(token)
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := weather.NewOpenWeatherClient(token)
 	cond, err := client.Current("London")
 	if err != nil {
 		t.Fatal(err)
