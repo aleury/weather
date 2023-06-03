@@ -38,7 +38,7 @@ func (c *OpenWeatherClient) FormatURL(location string) string {
 	return fmt.Sprintf("%s?q=%s&appid=%s", c.BaseURL, url.QueryEscape(location), c.token)
 }
 
-// Current fetches the present weather conditions of the given location.
+// Current fetches the present weather conditions at the given location.
 func (c *OpenWeatherClient) Current(location string) (Conditions, error) {
 	url := c.FormatURL(location)
 
@@ -93,22 +93,19 @@ func ParseJSON(r io.Reader) (Conditions, error) {
 	}
 
 	summary := response.Weather[0].Main
-	celsius := convertKelvinToCelsius(response.Main.Temp)
+	celsius := response.Main.Temp - 273.15
 
 	return Conditions{summary, celsius}, nil
 }
 
-func convertKelvinToCelsius(kelvin float64) (celsius float64) {
-	return kelvin - 273.15
-}
-
-func CurrentWeather(token, location string) (Conditions, error) {
+// Current returns the present weather conditions of the given location using
+// the Open Weather API.
+func Current(token, location string) (Conditions, error) {
 	client := NewOpenWeatherClient(token)
 	return client.Current(location)
 }
 
-// RunCLI runs the command-line interface using the given
-// weather api client.
+// RunCLI runs the command-line interface of the weather package.
 func RunCLI() int {
 	if len(os.Args) < 2 {
 		fmt.Fprintln(os.Stderr, "location not provided")
@@ -122,7 +119,7 @@ func RunCLI() int {
 		return 1
 	}
 
-	conditions, err := CurrentWeather(token, location)
+	conditions, err := Current(token, location)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "couldn't fetch weather conditions for location %q: %s\n", location, err)
 		return 1

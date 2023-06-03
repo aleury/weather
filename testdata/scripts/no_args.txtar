@@ -1,3 +1,4 @@
+env OPENWEATHER_API_TOKEN='dummy_token'
 ! exec weather
 stderr 'location not provided\n'
 ! stdout .
