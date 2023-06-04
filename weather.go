@@ -61,13 +61,13 @@ func (c *OpenWeatherClient) Current(location string) (Conditions, error) {
 
 // Conditions holds the weather summary and temperature of a particular location.
 type Conditions struct {
-	Summary            string
-	TemperatureCelsius float64
+	Summary     string
+	Temperature Temperature
 }
 
 // String formats the weather conditions as a string.
 func (c Conditions) String() string {
-	return fmt.Sprintf("%s %.1fºC", c.Summary, c.TemperatureCelsius)
+	return fmt.Sprintf("%s %.1fºC", c.Summary, c.Temperature.Celsius())
 }
 
 type jsonResponse struct {
@@ -93,9 +93,9 @@ func ParseJSON(r io.Reader) (Conditions, error) {
 	}
 
 	summary := response.Weather[0].Main
-	celsius := response.Main.Temp - 273.15
+	temperature := Temperature(response.Main.Temp)
 
-	return Conditions{summary, celsius}, nil
+	return Conditions{summary, temperature}, nil
 }
 
 // Current returns the present weather conditions of the given location using

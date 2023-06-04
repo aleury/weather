@@ -57,8 +57,8 @@ func TestParseJSON_ReturnsWeatherConditonsForValidInput(t *testing.T) {
 	}
 	defer f.Close()
 	want := weather.Conditions{
-		Summary:            "Drizzle",
-		TemperatureCelsius: 7.17,
+		Summary:     "Drizzle",
+		Temperature: weather.Temperature(280.32),
 	}
 	got, err := weather.ParseJSON(f)
 	if err != nil {
@@ -67,8 +67,8 @@ func TestParseJSON_ReturnsWeatherConditonsForValidInput(t *testing.T) {
 	if !cmp.Equal(want.Summary, got.Summary) {
 		t.Error(cmp.Diff(want, got))
 	}
-	if !closeEnough(want.TemperatureCelsius, got.TemperatureCelsius) {
-		t.Error(cmp.Diff(want.TemperatureCelsius, got.TemperatureCelsius))
+	if !closeEnough(float64(want.Temperature), float64(got.Temperature)) {
+		t.Error(cmp.Diff(want.Temperature, got.Temperature))
 	}
 }
 
@@ -92,8 +92,8 @@ func TestParseJSON_ReturnsErrorForInvalidJSON(t *testing.T) {
 
 func TestConditions_CanBeFormattedAsAString(t *testing.T) {
 	conditions := weather.Conditions{
-		Summary:            "Drizzle",
-		TemperatureCelsius: 7.17,
+		Summary:     "Drizzle",
+		Temperature: weather.Temperature(280.32),
 	}
 	want := "Drizzle 7.2ºC"
 	got := conditions.String()
@@ -121,8 +121,8 @@ func TestCurrent_ReturnsPresentWeatherConditonsOfAValidLocation(t *testing.T) {
 	client.HttpClient = server.Client()
 
 	want := weather.Conditions{
-		Summary:            "Drizzle",
-		TemperatureCelsius: 7.17,
+		Summary:     "Drizzle",
+		Temperature: weather.Temperature(280.32),
 	}
 	got, err := client.Current("London,UK")
 	if err != nil {
@@ -131,8 +131,8 @@ func TestCurrent_ReturnsPresentWeatherConditonsOfAValidLocation(t *testing.T) {
 	if !cmp.Equal(want.Summary, got.Summary) {
 		t.Error(cmp.Diff(want, got))
 	}
-	if !closeEnough(want.TemperatureCelsius, got.TemperatureCelsius) {
-		t.Error(cmp.Diff(want.TemperatureCelsius, got.TemperatureCelsius))
+	if !closeEnough(float64(want.Temperature), float64(got.Temperature)) {
+		t.Error(cmp.Diff(want.Temperature, got.Temperature))
 	}
 }
 
@@ -184,6 +184,16 @@ func TestCurrent_ReturnsErrorForInvalidURL(t *testing.T) {
 	}
 }
 
+func TestCelsius_ReturnsValueOfTemperatureInCelsius(t *testing.T) {
+	t.Parallel()
+	temperature := weather.Temperature(280.35)
+	want := 7.2
+	got := temperature.Celsius()
+	if !closeEnough(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
+
 func closeEnough(a, b float64) bool {
 	return math.Abs(a-b) <= 0.001
 }
@@ -215,8 +225,8 @@ func ExampleParseJSON() {
 
 func ExampleConditions_String() {
 	conditions := weather.Conditions{
-		Summary:            "Drizzle",
-		TemperatureCelsius: 7.17,
+		Summary:     "Drizzle",
+		Temperature: weather.Temperature(280.32),
 	}
 	fmt.Println(conditions.String())
 	// Output:
